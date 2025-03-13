@@ -8,6 +8,7 @@ from web3.contract import Contract
 from src.utils.constants import EXPLORER_URL, RPC_URL
 from src.utils.config import Config
 from loguru import logger
+from src.utils.rpc_utils import create_web3_client
 
 # ABI для Monad King NFT на основе транзакций
 MONAD_KING_ABI = [
@@ -85,12 +86,11 @@ class Monadking:
         self.config = config
         self.nft_contract_address = "0x5DCC4Cc8F56295Cb486809C77d476B2ea09a6938"
         self.unlocked_contract_address = "0xeC5Fc06e3C1D5d320199f1930cE3c3de9B262570"
-        self.web3 = AsyncWeb3(
-            AsyncWeb3.AsyncHTTPProvider(
-                RPC_URL,
-                request_kwargs={"proxy": (f"http://{proxy}"), "ssl": False},
-            )
-        )
+        self.web3 = create_web3_client(
+            rpc_url=RPC_URL,
+            account_index=account_index,
+            proxy=proxy,
+        )        
         self.nft_contract = self.web3.eth.contract(
             address=self.nft_contract_address, abi=MONAD_KING_ABI
         )
@@ -156,7 +156,7 @@ class Monadking:
 
                 # Параметры для минта на основе транзакций
                 native_token_address = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
-                price = self.web3.to_wei(0.02, "ether")
+                price = self.web3.to_wei(0.5, "ether")
 
                 # Структура allowlistProof из транзакций
                 allowlist_proof = (
@@ -247,7 +247,7 @@ class Monadking:
                 # Параметры для минта на основе транзакций
                 native_token_address = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
                 price = self.web3.to_wei(
-                    0.05, "ether"
+                    0.5, "ether"
                 )  # 0.05 ETH based on the transaction
 
                 # Структура allowlistProof из транзакций

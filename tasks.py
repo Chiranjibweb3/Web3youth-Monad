@@ -1,6 +1,10 @@
 TASKS = [
-    "FAUCET",
+    "MONADVERSE",
 ]
+
+MONADVERSE = ["monadverse"]
+
+# MAGICEDEN WORKS ONLY WITH THESE NFT https://magiceden.io/mint-terminal/monad-testnet
 
 FAUCET = [
     "faucet",
@@ -89,6 +93,11 @@ BRIDGE_SEPOLIA_AND_CONVERT_TO_MON = [
     "collect_all_to_monad",
 ]
 
+SWAPS_TASK = [
+    ("izumi", "ambient", "bean", "swaps"),
+    "collect_all_to_monad",
+]
+
 STAKING_TASK = [
     ("apriori", "magma", "shmonad", "kintsu"),
 ]
@@ -107,7 +116,6 @@ EXCHANGE_AND_TESTNET_BRIDGE_TASK = [
 EXCHANGE_AND_MEMEBRIDGE_TASK = [
     "cex_withdrawal",
     "memebridge",
-    "collect_all_to_monad",
 ]
 
 # FAUCETS
@@ -126,6 +134,7 @@ EXCHANGE_AND_MEMEBRIDGE_TASK = [
 # "magma" - stake MON token on Magma
 # "shmonad" - buy and stake shmon on shmonad.xyz | LOOK SETTINGS BELOW
 # "kintsu" - stake MON token on kintsu.xyz/
+# "nostra" - deposit, borrow, repay, withdraw 
 
 # MINT
 # "magiceden" - mint NFT on magiceden.io
@@ -134,6 +143,7 @@ EXCHANGE_AND_MEMEBRIDGE_TASK = [
 # "demask" - mint NFT on app.demask.finance/launchpad/0x2cdd146aa75ffa605ff7c5cc5f62d3b52c140f9c/0
 # "monadking" - mint NFT on nerzo.xyz/monadking
 # "monadking_unlocked" - mint NFT on www.nerzo.xyz/unlocked
+# "monadverse" - mint NFT on monadverse.xyz
 
 # REFUEL
 # "gaszip" - gaszip refuel from arbitrum, optimism, base to monad
@@ -142,6 +152,9 @@ EXCHANGE_AND_MEMEBRIDGE_TASK = [
 
 # CEX WITHDRAWAL
 # "cex_withdrawal" - withdraw tokens from cex
+
+#GAMES
+# "frontrunner" - play frontrunner game
 
 # OTHER
 # "logs" - show logs: MON balance | number of transactions | avarage balance | avarage number of transactions

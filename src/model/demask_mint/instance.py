@@ -8,6 +8,7 @@ from web3.contract import Contract
 from src.utils.constants import EXPLORER_URL, RPC_URL
 from src.utils.config import Config
 from loguru import logger
+from src.utils.rpc_utils import create_web3_client
 
 # Обновляем ABI для контракта NFT с дополнительными методами
 ERC1155_ABI = [
@@ -61,13 +62,11 @@ class Demask:
         self.session = session
 
         self.account: Account = Account.from_key(private_key=private_key)
-        self.web3 = AsyncWeb3(
-            AsyncWeb3.AsyncHTTPProvider(
-                RPC_URL,
-                request_kwargs={"proxy": (f"http://{proxy}"), "ssl": False},
-            )
+        self.web3 = create_web3_client(
+            rpc_url=RPC_URL,
+            account_index=account_index,
+            proxy=proxy,
         )
-
         self.nft_contract_address = "0x2CDd146Aa75FFA605ff7c5Cc5f62D3B52C140f9c"  # Updated contract address for DeMask
         self.nft_contract: Contract = self.web3.eth.contract(
             address=self.nft_contract_address, abi=ERC1155_ABI

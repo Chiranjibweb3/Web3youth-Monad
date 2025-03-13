@@ -9,18 +9,16 @@ from src.utils.constants import RPC_URL, EXPLORER_URL, ERC20_ABI
 from src.model.monad_xyz.constants import IZUMI_ABI, IZUMI_TOKENS, IZUMI_CONTRACT
 import time
 from src.utils.config import Config
-
+from src.utils.rpc_utils import create_web3_client
 
 class IzumiDex:
     def __init__(
         self, private_key: str, proxy: Optional[str] = None, config: Config = None
     ):
-        self.web3 = AsyncWeb3(
-            AsyncWeb3.AsyncHTTPProvider(
-                RPC_URL,
-                request_kwargs={"proxy": (f"http://{proxy}"), "ssl": False},
-            )
-        )
+        self.web3 = create_web3_client(
+            rpc_url=RPC_URL,
+            proxy=proxy,
+        )        
         self.account = Account.from_key(private_key)
         self.proxy = proxy
         self.router_contract = self.web3.eth.contract(

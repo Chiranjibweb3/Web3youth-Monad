@@ -19,20 +19,15 @@ from src.model.monad_xyz.constants import (
 from loguru import logger
 import random
 from src.utils.config import Config
-
+from src.utils.rpc_utils import create_web3_client
 
 class AmbientDex:
     def __init__(
         self, private_key: str, proxy: Optional[str] = None, config: Config = None
     ):
-        self.web3 = AsyncWeb3(
-            AsyncWeb3.AsyncHTTPProvider(
-                RPC_URL,
-                request_kwargs={
-                    "proxy": (f"http://{proxy}"),
-                    "ssl": False,
-                },
-            )
+        self.web3 = create_web3_client(
+            rpc_url=RPC_URL,
+            proxy=proxy,
         )
         self.account = Account.from_key(private_key)
         self.proxy = proxy

@@ -118,12 +118,16 @@ class TestnetBridge:
                 return None  # This is a valid case, not an error
             
             eligible_networks = []
-            amount_to_bridge = random.uniform(
-                self.config.TESTNET_BRIDGE.AMOUNT_TO_REFUEL[0],
-                self.config.TESTNET_BRIDGE.AMOUNT_TO_REFUEL[1]
-            )
+            if self.config.TESTNET_BRIDGE.BRIDGE_ALL:
+                amount_to_bridge = 0.0001
+                logger.info(f"[{self.account_index}] Checking balances for bridging ALL ETH to Sepolia")
+            else:
+                amount_to_bridge = random.uniform(
+                    self.config.TESTNET_BRIDGE.AMOUNT_TO_REFUEL[0],
+                    self.config.TESTNET_BRIDGE.AMOUNT_TO_REFUEL[1]
+                )
+                logger.info(f"[{self.account_index}] Checking balances for bridging {amount_to_bridge} ETH to Sepolia")
             
-            logger.info(f"[{self.account_index}] Checking balances for bridging {amount_to_bridge} ETH to Sepolia")
             
             for network in self.config.TESTNET_BRIDGE.NETWORKS_TO_REFUEL_FROM:
                 balance = await self.get_native_balance(network)
@@ -135,7 +139,7 @@ class TestnetBridge:
             
             if not eligible_networks:
                 logger.warning(f"[{self.account_index}] No networks with sufficient balance found")
-                raise ValueError("No networks with sufficient balance found")
+                return None
             
             selected_network = random.choice(eligible_networks)
             logger.info(f"[{self.account_index}] Selected {selected_network} for bridging to Sepolia")
@@ -279,62 +283,138 @@ class TestnetBridge:
             
             # Convert amount to wei
             amount_in = web3.to_wei(amount_to_bridge, 'ether')
-            
-            # Calculate minimum amount out
-            amount_out_min = await self.calculate_amount_out_min(network, amount_in)
-            
-            # Get destination chain ID for Sepolia - typically 161 as per example
-            # This should ideally come from config but hardcoded for now
             sepolia_chain_id = 161  # LayerZero chain ID for Sepolia
             
             # Get nonce and gas parameters
             nonce = await web3.eth.get_transaction_count(self.account.address)
             
-            # Build the transaction using the contract function
-            transaction = contract.functions.swapAndBridge(
-                amount_in,  # amountIn
-                amount_out_min,  # amountOutMin
-                sepolia_chain_id,  # dstChainId
-                self.account.address,  # to
-                self.account.address,  # refundAddress
-                web3.to_checksum_address("0x0000000000000000000000000000000000000000"),  # zroPaymentAddress
-                b""  # adapterParams
-            )
+            if not self.config.TESTNET_BRIDGE.BRIDGE_ALL:
+                amount_out_min = await self.calculate_amount_out_min(network, amount_in)
+                # Build the transaction using the contract function
+                transaction = contract.functions.swapAndBridge(
+                    amount_in,  # amountIn
+                    amount_out_min,  # amountOutMin
+                    sepolia_chain_id,  # dstChainId
+                    self.account.address,  # to
+                    self.account.address,  # refundAddress
+                    web3.to_checksum_address("0x0000000000000000000000000000000000000000"),  # zroPaymentAddress
+                    b""  # adapterParams
+                )
+                
+                # Estimate bridge fee based on the example
+                bridge_fee = await self.estimate_bridge_fee(network, amount_in)
+                # Build the transaction without gas limit first
+                gas_params = await self.get_gas_params(web3)
+                
+
+                built_transaction = await transaction.build_transaction({
+                    "from": self.account.address,
+                    "value": amount_in + bridge_fee,  # The amount plus a fee for bridging
+                    "nonce": nonce,
+                    "chainId": await web3.eth.chain_id,
+                    "type": "0x2",  # EIP-1559 transaction
+                    **gas_params
+                })
+                
+                # Manually estimate gas for the transaction
+                logger.info(f"[{self.account_index}] Estimating gas for bridge transaction...")
+                estimated_gas = await web3.eth.estimate_gas({
+                    "from": self.account.address,
+                    "to": contract.address,
+                    "value": amount_in + bridge_fee,
+                    "data": built_transaction["data"],
+                    "nonce": nonce,
+                    "maxFeePerGas": gas_params["maxFeePerGas"],
+                    "maxPriorityFeePerGas": gas_params["maxPriorityFeePerGas"],
+                })
+                
+                # Multiply by 1.2 for safety buffer
+                gas_limit = int(estimated_gas * 1.2)
+                logger.info(f"[{self.account_index}] Estimated gas: {estimated_gas}, with buffer: {gas_limit}")
+                
+                # Add gas limit to the transaction
+                built_transaction["gas"] = gas_limit
+                
+                return built_transaction
             
-            # Estimate bridge fee based on the example
-            bridge_fee = await self.estimate_bridge_fee(network, amount_in)
-            # Build the transaction without gas limit first
-            gas_params = await self.get_gas_params(web3)
-            built_transaction = await transaction.build_transaction({
-                "from": self.account.address,
-                "value": amount_in + bridge_fee,  # The amount plus a fee for bridging
-                "nonce": nonce,
-                "chainId": await web3.eth.chain_id,
-                "type": "0x2",  # EIP-1559 transaction
-                **gas_params
-            })
-            
-            # Manually estimate gas for the transaction
-            logger.info(f"[{self.account_index}] Estimating gas for bridge transaction...")
-            estimated_gas = await web3.eth.estimate_gas({
-                "from": self.account.address,
-                "to": contract.address,
-                "value": amount_in + bridge_fee,
-                "data": built_transaction["data"],
-                "nonce": nonce,
-                "maxFeePerGas": gas_params["maxFeePerGas"],
-                "maxPriorityFeePerGas": gas_params["maxPriorityFeePerGas"],
-            })
-            
-            # Multiply by 1.2 for safety buffer
-            gas_limit = int(estimated_gas * 1.2)
-            logger.info(f"[{self.account_index}] Estimated gas: {estimated_gas}, with buffer: {gas_limit}")
-            
-            # Add gas limit to the transaction
-            built_transaction["gas"] = gas_limit
-            
-            return built_transaction
-            
+            else:
+                balance = await web3.eth.get_balance(self.account.address)
+                balance_ether = web3.from_wei(balance, "ether")
+                if balance_ether > self.config.TESTNET_BRIDGE.BRIDGE_ALL_MAX_AMOUNT:
+                    balance = int(web3.to_wei(self.config.TESTNET_BRIDGE.BRIDGE_ALL_MAX_AMOUNT, "ether") * random.uniform(0.95, 0.99))
+                bridge_fee = await self.estimate_bridge_fee(network, balance)
+
+                logger.info(f"[{self.account_index}] Attempting to bridge full balance from {network}")
+                
+                gas_params = await self.get_gas_params(web3)
+                # Create a dummy transaction to estimate gas
+                dummy_amount = web3.to_wei(0.0001, "ether")  # Small amount for estimation
+                dummy_transaction = contract.functions.swapAndBridge(
+                    dummy_amount,
+                    1,  # minimal amount out
+                    sepolia_chain_id,
+                    self.account.address,
+                    self.account.address,
+                    web3.to_checksum_address("0x0000000000000000000000000000000000000000"),
+                    b""
+                )
+                
+                # Estimate gas for the transaction with the dummy amount
+                dummy_tx = await dummy_transaction.build_transaction({
+                    "from": self.account.address,
+                    "value": dummy_amount + bridge_fee,
+                    "nonce": nonce,
+                    "chainId": await web3.eth.chain_id,
+                    "type": "0x2",
+                    **gas_params
+                })
+                # Estimate gas for the transaction
+                estimated_gas = await web3.eth.estimate_gas(dummy_tx)
+                gas_limit = int(estimated_gas * 1.2)  # Add 20% buffer
+                
+                # Calculate the gas cost in wei
+                gas_cost = gas_limit * gas_params["maxFeePerGas"]
+                
+                # Calculate the maximum amount we can bridge
+                # Full balance - (gas cost + bridge fee + small buffer)
+                buffer = web3.to_wei(random.uniform(0.00001, 0.00002), "ether")  # Small buffer to prevent errors
+                costs = ((gas_cost + bridge_fee) * random.uniform(1.15, 1.2)  + buffer)
+                max_amount = balance - costs
+                if max_amount <= 0:
+                    logger.warning(f"[{self.account_index}] Not enough balance to cover fees in {network}")
+                    return None
+                
+                logger.info(f"[{self.account_index}] Bridging {web3.from_wei(max_amount, 'ether')} ETH from {network} (max possible amount)")
+                
+                # Update the amount_in to be the maximum possible
+                amount_in = int(max_amount)
+                amount_out_min = await self.calculate_amount_out_min(network, amount_in)
+                # Now build the actual transaction with the correct amount
+                transaction = contract.functions.swapAndBridge(
+                    amount_in,  # amountIn
+                    amount_out_min,  # amountOutMin
+                    sepolia_chain_id,  # dstChainId
+                    self.account.address,  # to
+                    self.account.address,  # refundAddress
+                    web3.to_checksum_address("0x0000000000000000000000000000000000000000"),  # zroPaymentAddress
+                    b""  # adapterParams
+                )
+                
+                # Build the transaction without gas limit first
+                gas_params = await self.get_gas_params(web3)
+                
+                built_transaction = await transaction.build_transaction({
+                    "from": self.account.address,
+                    "value": amount_in + bridge_fee,  # The amount plus a fee for bridging
+                    "nonce": nonce,
+                    "gas": gas_limit,
+                    "chainId": await web3.eth.chain_id,
+                    "type": "0x2",  # EIP-1559 transaction
+                    **gas_params
+                })
+                
+                return built_transaction
+
         except Exception as e:
             logger.error(f"[{self.account_index}] Error building bridge transaction: {str(e)}")
             raise e

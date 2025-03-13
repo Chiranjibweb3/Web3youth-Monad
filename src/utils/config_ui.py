@@ -502,6 +502,13 @@ class ConfigUI:
             self.config["DUSTED"]["CLAIM"],
         )
 
+        # Add the SKIP_TWITTER_VERIFICATION checkbox after the CLAIM checkbox
+        self.dusted_skip_twitter_verification = self.create_checkbox(
+            dusted,
+            "SKIP_TWITTER_VERIFICATION",
+            self.config["DUSTED"]["SKIP_TWITTER_VERIFICATION"],
+        )
+
         # Swaps Category
         self.create_category_header(left_column, "💱 SWAPS")
 
@@ -557,6 +564,21 @@ class ConfigUI:
             magiceden,
             "NFT_CONTRACTS",
             self.config["MAGICEDEN"]["NFT_CONTRACTS"],
+        )
+
+        # FRONT_RUNNER
+        frame_front_runner = self.create_section(right_column, "FRONT_RUNNER")
+
+        self.max_transactions_for_one_run = self.create_range_inputs(
+            frame_front_runner,
+            "MAX_AMOUNT_TRANSACTIONS_FOR_ONE_RUN:",
+            self.config["FRONT_RUNNER"]["MAX_AMOUNT_TRANSACTIONS_FOR_ONE_RUN"],
+        )
+        
+        self.pause_between_transactions = self.create_range_inputs(
+            frame_front_runner,
+            "PAUSE_BETWEEN_TRANSACTIONS:",
+            self.config["FRONT_RUNNER"]["PAUSE_BETWEEN_TRANSACTIONS"],
         )
 
         # RIGHT COLUMN
@@ -744,6 +766,21 @@ class ConfigUI:
             width=self.input_sizes["tiny"],
         )
 
+        # Add the BRIDGE_ALL checkbox
+        self.testnet_bridge_all = self.create_checkbox(
+            testnet,
+            "BRIDGE_ALL",
+            self.config["TESTNET_BRIDGE"]["BRIDGE_ALL"],
+        )
+        
+        # Add the BRIDGE_ALL_MAX_AMOUNT input
+        self.testnet_bridge_max = self.create_single_input(
+            testnet,
+            "BRIDGE_ALL_MAX_AMOUNT",
+            self.config["TESTNET_BRIDGE"]["BRIDGE_ALL_MAX_AMOUNT"],
+            width=100,
+        )
+
         orbiter = self.create_section(right_column, "ORBITER")
         self.orbiter_amount_min, self.orbiter_amount_max = self.create_range_inputs(
             orbiter, "AMOUNT_TO_BRIDGE", self.config["ORBITER"]["AMOUNT_TO_BRIDGE"]
@@ -890,6 +927,32 @@ class ConfigUI:
             self.config["BIMA"]["PERCENT_OF_BALANCE_TO_LEND"],
         )
 
+        # Add NOSTRA section
+        nostra = self.create_section(right_column, "NOSTRA")
+        self.nostra_deposit_min, self.nostra_deposit_max = self.create_range_inputs(
+            nostra, "PERCENT_OF_BALANCE_TO_DEPOSIT", self.config["NOSTRA"]["PERCENT_OF_BALANCE_TO_DEPOSIT"]
+        )
+        self.nostra_deposit = self.create_checkbox(
+            nostra,
+            "DEPOSIT",
+            self.config["NOSTRA"]["DEPOSIT"],
+        )
+        self.nostra_borrow = self.create_checkbox(
+            nostra,
+            "BORROW",
+            self.config["NOSTRA"]["BORROW"],
+        )
+        self.nostra_repay = self.create_checkbox(
+            nostra,
+            "REPAY",
+            self.config["NOSTRA"]["REPAY"],
+        )
+        self.nostra_withdraw = self.create_checkbox(
+            nostra,
+            "WITHDRAW",
+            self.config["NOSTRA"]["WITHDRAW"],
+        )
+
     def _save_and_close(self):
         """Save config and close the window"""
         self.save_config()
@@ -956,6 +1019,7 @@ class ConfigUI:
         
         # DUSTED
         self.config["DUSTED"]["CLAIM"] = self.dusted_claim.get()
+        self.config["DUSTED"]["SKIP_TWITTER_VERIFICATION"] = self.dusted_skip_twitter_verification.get()
 
         # FLOW
         self.config["FLOW"]["NUMBER_OF_SWAPS"] = [
@@ -1049,6 +1113,10 @@ class ConfigUI:
         self.config["TESTNET_BRIDGE"]["MAX_WAIT_TIME"] = int(
             self.testnet_wait_time.get()
         )
+        self.config["TESTNET_BRIDGE"]["BRIDGE_ALL"] = self.testnet_bridge_all.get()
+        self.config["TESTNET_BRIDGE"]["BRIDGE_ALL_MAX_AMOUNT"] = float(
+            self.testnet_bridge_max.get()
+        )
 
         # ACCOUNTABLE
         self.config["ACCOUNTABLE"]["NFT_PER_ACCOUNT_LIMIT"] = int(
@@ -1078,6 +1146,16 @@ class ConfigUI:
             x.strip()
             for x in self.magiceden_contracts.get("1.0", "end-1c").split("\n")
             if x.strip()
+        ]
+
+        # FRONT_RUNNER
+        self.config["FRONT_RUNNER"]["MAX_AMOUNT_TRANSACTIONS_FOR_ONE_RUN"] = [
+            int(self.max_transactions_for_one_run[0].get()),
+            int(self.max_transactions_for_one_run[1].get()),
+        ]
+        self.config["FRONT_RUNNER"]["PAUSE_BETWEEN_TRANSACTIONS"] = [
+            int(self.pause_between_transactions[0].get()),
+            int(self.pause_between_transactions[1].get()),
         ]
 
         # SHMONAD
@@ -1125,6 +1203,16 @@ class ConfigUI:
             int(float(self.bima_percent_min.get())),
             int(float(self.bima_percent_max.get())),
         ]
+
+        # NOSTRA
+        self.config["NOSTRA"]["PERCENT_OF_BALANCE_TO_DEPOSIT"] = [
+            float(self.nostra_deposit_min.get()),
+            float(self.nostra_deposit_max.get()),
+        ]
+        self.config["NOSTRA"]["DEPOSIT"] = self.nostra_deposit.get()
+        self.config["NOSTRA"]["BORROW"] = self.nostra_borrow.get()
+        self.config["NOSTRA"]["REPAY"] = self.nostra_repay.get()
+        self.config["NOSTRA"]["WITHDRAW"] = self.nostra_withdraw.get()
 
         # Save to file with improved formatting
         config_path = os.path.join(os.path.dirname(__file__), "..", "..", "config.yaml")

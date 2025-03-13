@@ -65,6 +65,16 @@ class BimaConfig:
 @dataclass
 class DustedConfig:
     CLAIM: bool
+    SKIP_TWITTER_VERIFICATION: bool
+
+
+@dataclass
+class NostraConfig:
+    PERCENT_OF_BALANCE_TO_DEPOSIT: Tuple[float, float]
+    DEPOSIT: bool
+    BORROW: bool
+    REPAY: bool
+    WITHDRAW: bool
 
 
 @dataclass
@@ -110,6 +120,8 @@ class TestnetBridgeConfig:
     MINIMUM_BALANCE_TO_REFUEL: float
     WAIT_FOR_FUNDS_TO_ARRIVE: bool
     MAX_WAIT_TIME: int
+    BRIDGE_ALL: bool
+    BRIDGE_ALL_MAX_AMOUNT: float
 
 
 @dataclass
@@ -150,6 +162,12 @@ class DemaskConfig:
 @dataclass
 class MonadkingConfig:
     MAX_AMOUNT_FOR_EACH_ACCOUNT: Tuple[int, int]
+
+
+@dataclass
+class FrontRunnerConfig:
+    MAX_AMOUNT_TRANSACTIONS_FOR_ONE_RUN: Tuple[int, int]
+    PAUSE_BETWEEN_TRANSACTIONS: Tuple[int, int]
 
 
 @dataclass
@@ -196,10 +214,12 @@ class Config:
     LILCHOGSTARS: LilchogstarsConfig
     DEMASK: DemaskConfig
     MONADKING: MonadkingConfig
+    FRONT_RUNNER: FrontRunnerConfig
     MAGICEDEN: MagicEdenConfig
     MEMEBRIDGE: MemebridgeConfig
     TESTNET_BRIDGE: TestnetBridgeConfig
     DUSTED: DustedConfig
+    NOSTRA: NostraConfig
     WALLETS: WalletsConfig = field(default_factory=WalletsConfig)
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
@@ -319,6 +339,14 @@ class Config:
             ),
             DUSTED=DustedConfig(
                 CLAIM=data["DUSTED"]["CLAIM"],
+                SKIP_TWITTER_VERIFICATION=data["DUSTED"]["SKIP_TWITTER_VERIFICATION"],
+            ),
+            NOSTRA=NostraConfig(
+                PERCENT_OF_BALANCE_TO_DEPOSIT=tuple(data["NOSTRA"]["PERCENT_OF_BALANCE_TO_DEPOSIT"]),
+                DEPOSIT=data["NOSTRA"]["DEPOSIT"],
+                BORROW=data["NOSTRA"]["BORROW"],
+                REPAY=data["NOSTRA"]["REPAY"],
+                WITHDRAW=data["NOSTRA"]["WITHDRAW"],
             ),
             GASZIP=GaszipConfig(
                 NETWORKS_TO_REFUEL_FROM=data["GASZIP"]["NETWORKS_TO_REFUEL_FROM"],
@@ -352,6 +380,8 @@ class Config:
                     "WAIT_FOR_FUNDS_TO_ARRIVE"
                 ],
                 MAX_WAIT_TIME=data["TESTNET_BRIDGE"]["MAX_WAIT_TIME"],
+                BRIDGE_ALL=data["TESTNET_BRIDGE"]["BRIDGE_ALL"],
+                BRIDGE_ALL_MAX_AMOUNT=data["TESTNET_BRIDGE"]["BRIDGE_ALL_MAX_AMOUNT"],
             ),
             SHMONAD=ShmonadConfig(
                 PERCENT_OF_BALANCE_TO_SWAP=tuple(
@@ -387,6 +417,14 @@ class Config:
             MONADKING=MonadkingConfig(
                 MAX_AMOUNT_FOR_EACH_ACCOUNT=tuple(
                     data["MONADKING"]["MAX_AMOUNT_FOR_EACH_ACCOUNT"]
+                ),
+            ),
+            FRONT_RUNNER=FrontRunnerConfig(
+                MAX_AMOUNT_TRANSACTIONS_FOR_ONE_RUN=tuple(
+                    data["FRONT_RUNNER"]["MAX_AMOUNT_TRANSACTIONS_FOR_ONE_RUN"]
+                ),
+                PAUSE_BETWEEN_TRANSACTIONS=tuple(
+                    data["FRONT_RUNNER"]["PAUSE_BETWEEN_TRANSACTIONS"]
                 ),
             ),
             MAGICEDEN=MagicEdenConfig(

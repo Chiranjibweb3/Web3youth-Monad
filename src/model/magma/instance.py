@@ -10,6 +10,7 @@ from src.utils.config import Config
 from src.utils.constants import RPC_URL, EXPLORER_URL
 from .constants import STAKE_ADDRESS, STAKE_ABI, STAKED_TOKEN
 from src.utils.constants import ERC20_ABI
+from src.utils.rpc_utils import create_web3_client
 
 class Magma:
     def __init__(
@@ -27,13 +28,11 @@ class Magma:
         self.session = session
 
         self.account: Account = Account.from_key(private_key=private_key)
-        self.web3 = AsyncWeb3(
-            AsyncWeb3.AsyncHTTPProvider(
-                RPC_URL,
-                request_kwargs={"proxy": (f"http://{proxy}"), "ssl": False},
-            )
+        self.web3 = create_web3_client(
+            rpc_url=RPC_URL,
+            account_index=account_index,
+            proxy=proxy,
         )
-
     async def get_gas_params(self) -> Dict[str, int]:
         """Get current gas parameters from the network."""
         latest_block = await self.web3.eth.get_block("latest")

@@ -3,6 +3,8 @@ import primp
 import random
 import asyncio
 
+from src.model.nostra.instance import Nostra
+from src.model.frontrunner.instance import Frontrunner
 from src.model.cex_withdrawal.instance import CexWithdraw
 from src.model.testnet_bridge.instance import TestnetBridge
 from src.model.memebridge.instance import Memebridge
@@ -36,13 +38,16 @@ class Start:
         proxy: str,
         private_key: str,
         discord_token: str,
+        twitter_token: str,
         email: str,
         config: Config,
+
     ):
         self.account_index = account_index
         self.proxy = proxy
         self.private_key = private_key
         self.discord_token = discord_token
+        self.twitter_token = twitter_token
         self.email = email
         self.config = config
 
@@ -313,6 +318,16 @@ class Start:
             )
             await monadking_unlocked.mint_unlocked()
 
+        elif task == "nostra":
+            nostra = Nostra(
+                self.account_index,
+                self.proxy,
+                self.private_key,
+                self.config,
+                self.session,
+            )
+            await nostra.execute()
+
         elif task == "magiceden":
             magiceden = MagicEden(
                 self.account_index,
@@ -338,10 +353,21 @@ class Start:
                 self.account_index,
                 self.proxy,
                 self.private_key,
+                self.twitter_token,
                 self.config,
                 self.session,
             )
             await dusty.execute()
+
+        elif task == "frontrunner":
+            frontrunner = Frontrunner(
+                self.account_index,
+                self.proxy,
+                self.private_key,
+                self.config,
+                self.session,
+            )
+            await frontrunner.send_transaction()
 
         elif task == "cex_withdrawal":
             cex_withdrawal = CexWithdraw(

@@ -8,7 +8,7 @@ from src.utils.config import Config
 from src.utils.constants import EXPLORER_URL, RPC_URL
 from src.model.shmonad.constants import SHMONAD_ADDRESS, SHMONAD_ABI, STAKE_POLICY_ID
 from typing import Dict
-
+from src.utils.rpc_utils import create_web3_client
 
 class Shmonad:
     def __init__(
@@ -26,10 +26,10 @@ class Shmonad:
         self.session = session
 
         self.account: Account = Account.from_key(private_key=private_key)
-        self.web3 = AsyncWeb3(
-            AsyncWeb3.AsyncHTTPProvider(
-                RPC_URL, request_kwargs={"proxy": (f"http://{proxy}"), "ssl": False},
-            )
+        self.web3 = create_web3_client(
+            rpc_url=RPC_URL,
+            account_index=account_index,
+            proxy=proxy,
         )
 
     async def _get_shmon_balance(self):

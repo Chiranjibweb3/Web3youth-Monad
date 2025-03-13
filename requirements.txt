@@ -62,3 +62,4 @@ yarl==1.18.3
 ccxt
 pynocaptcha
 curl_cffi
+tqdm

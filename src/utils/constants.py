@@ -1,6 +1,6 @@
 EXPLORER_URL = "https://testnet.monadexplorer.com/tx/0x"
-RPC_URL = "https://testnet-rpc.monad.xyz/"
-# RPC_URL = "https://monad-testnet.drpc.org/" 
+RPC_URL = "https://testnet-rpc.monad.xyz"
+
 
 TOKENS = {
     "native": "native",  # MON

@@ -11,7 +11,7 @@ from src.utils.client import create_client
 from src.utils.config import Config
 from loguru import logger
 from src.model.accountable.constants import ACCOUNTABLE_ABI
-
+from src.utils.rpc_utils import create_web3_client
 
 class Accountable:
     def __init__(
@@ -29,13 +29,11 @@ class Accountable:
         self.session = session
 
         self.account: Account = Account.from_key(private_key=private_key)
-        self.web3 = AsyncWeb3(
-            AsyncWeb3.AsyncHTTPProvider(
-                RPC_URL,
-                request_kwargs={"proxy": (f"http://{proxy}"), "ssl": False},
-            )
+        self.web3 = create_web3_client(
+            rpc_url=RPC_URL,
+            account_index=account_index,
+            proxy=proxy,
         )
-
         self.nft_contract_address = "0xfa67a16ccC5d2C3d80e5DaF692DDfbb53F8D7Cfd"
         self.nft_contract = self.web3.eth.contract(
             address=self.nft_contract_address, abi=ACCOUNTABLE_ABI

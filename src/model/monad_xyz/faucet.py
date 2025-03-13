@@ -26,47 +26,47 @@ async def faucet(
             user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
             href = "https://testnet.monad.xyz/"
 
-            # First get the Vercel challenge token
-            response = await session.post(
-                "http://api.nocaptcha.io/api/wanda/vercel/universal",
-                headers={
-                    "User-Token": config.FAUCET.NOCAPTCHA_API_KEY,
-                    "Developer-Id": "SWVtru",
-                },
-                json={
-                    "href": href,
-                    "user_agent": user_agent,
-                    "proxy": proxy,
-                    "timeout": 30,
-                },
-            )
+            # # First get the Vercel challenge token
+            # response = await session.post(
+            #     "http://api.nocaptcha.io/api/wanda/vercel/universal",
+            #     headers={
+            #         "User-Token": config.FAUCET.NOCAPTCHA_API_KEY,
+            #         "Developer-Id": "SWVtru",
+            #     },
+            #     json={
+            #         "href": href,
+            #         "user_agent": user_agent,
+            #         "proxy": proxy,
+            #         "timeout": 30,
+            #     },
+            # )
 
-            vercel_resp = response.json()
+            # vercel_resp = response.json()
 
-            if vercel_resp.get("status") != 1:
-                raise Exception(
-                    f"Failed to solve Vercel challenge: {vercel_resp.get('msg')}"
-                )
+            # if vercel_resp.get("status") != 1:
+            #     raise Exception(
+            #         f"Failed to solve Vercel challenge: {vercel_resp.get('msg')}"
+            #     )
 
-            extra = vercel_resp["extra"]
+            # extra = vercel_resp["extra"]
 
-            # Prepare headers with Vercel token - exactly matching working example
-            headers = {
-                "sec-ch-ua": extra["sec-ch-ua"],
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": extra["sec-ch-ua-platform"],
-                "upgrade-insecure-requests": "1",
-                "user-agent": extra["user-agent"],
-                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "sec-fetch-site": "same-origin",
-                "sec-fetch-mode": "navigate",
-                "sec-fetch-dest": "document",
-                "referer": href,
-                "accept-encoding": "gzip, deflate, br, zstd",
-                "accept-language": extra["accept-language"],
-                "cookie": "_vcrcs=" + vercel_resp["data"]["_vcrcs"],
-                "priority": "u=0, i",
-            }
+            # # Prepare headers with Vercel token - exactly matching working example
+            # headers = {
+            #     "sec-ch-ua": extra["sec-ch-ua"],
+            #     "sec-ch-ua-mobile": "?0",
+            #     "sec-ch-ua-platform": extra["sec-ch-ua-platform"],
+            #     "upgrade-insecure-requests": "1",
+            #     "user-agent": extra["user-agent"],
+            #     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            #     "sec-fetch-site": "same-origin",
+            #     "sec-fetch-mode": "navigate",
+            #     "sec-fetch-dest": "document",
+            #     "referer": href,
+            #     "accept-encoding": "gzip, deflate, br, zstd",
+            #     "accept-language": extra["accept-language"],
+            #     "cookie": "_vcrcs=" + vercel_resp["data"]["_vcrcs"],
+            #     "priority": "u=0, i",
+            # }
 
             if config.FAUCET.USE_CAPSOLVER_FOR_CLOUDFLARE:
                 logger.info(
@@ -116,39 +116,65 @@ async def faucet(
 
             # Заменяем TlsV1Cracker на асинхронный запрос
             logger.info(f"[{account_index}] | Sending claim request...")
-            wanda_result = await make_wanda_request(
-                session=session,
-                user_token=config.FAUCET.NOCAPTCHA_API_KEY,
-                url=f"{href}api/claim",
-                method="post",
-                headers=headers,
-                json_data=json_data,
-                proxy=proxy,
-                http2=True,
-                timeout=30,
-                debug=False,
-            )
-
-            if wanda_result and wanda_result["data"]:
-                claim_result = wanda_result["data"]
-            else:
-                raise Exception(f"wrong wanda_result: {wanda_result}")
-
-            response_text = claim_result.get("response", {}).get("text", "")
-            # curl_session = AsyncSession(
-            #     impersonate="chrome131",
-            #     proxies={"http": f"http://{proxy}", "https": f"http://{proxy}"},
-            #     verify=False,
+            # wanda_result = await make_wanda_request(
+            #     session=session,
+            #     user_token=config.FAUCET.NOCAPTCHA_API_KEY,
+            #     url=f"{href}api/claim",
+            #     method="post",
+            #     headers=headers,
+            #     json_data=json_data,
+            #     proxy=proxy,
+            #     http2=True,
+            #     timeout=30,
+            #     debug=False,
             # )
+
+            # if wanda_result and wanda_result["data"]:
+            #     claim_result = wanda_result["data"]
+            # else:
+            #     raise Exception(f"wrong wanda_result: {wanda_result}")
+
+            # response_text = claim_result.get("response", {}).get("text", "")
+            curl_session = AsyncSession(
+                impersonate="chrome131",
+                proxies={"http": f"http://{proxy}", "https": f"http://{proxy}"},
+                verify=False,
+            )
 
             # claim_result = await curl_session.post(
             #     "https://testnet.monad.xyz/api/claim", headers=headers, json=json_data
             # )
 
             # response_text = claim_result.text
+            headers = {
+                "sec-ch-ua-platform": '"Windows"',
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+                "sec-ch-ua": '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
+                "content-type": "application/json",
+                "sec-ch-ua-mobile": "?0",
+                "accept": "*/*",
+                "origin": "https://testnet.monad.xyz",
+                "sec-fetch-site": "same-origin",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-dest": "empty",
+                "referer": "https://testnet.monad.xyz/",
+                "accept-language": "en-GB,en;q=0.9",
+                "priority": "u=1, i",
+            }
+
+            response = await curl_session.post(
+                "https://testnet.monad.xyz/api/faucet/claim", headers=headers, json=json_data
+            )
+            response_text = response.text
 
             if not response_text:
                 raise Exception("Failed to send claim request")
+
+            if '"Success"' in response_text:
+                logger.success(
+                    f"[{account_index}] | Successfully got tokens from faucet"
+                )
+                return True
 
             if "Claimed already" in response_text:
                 logger.success(
