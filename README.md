@@ -95,5 +95,6 @@ python main.py
 ```
 
 ## Support
-- Telegram: https://t.me/StarLabsTech
-- Chat: https://t.me/StarLabsChat
+- Telegram: https://t.me/UniqueAlphaAirdrop
+- Warpcast: https://warpcast.com/web3youth
+- Lens: https://hey.xyz/u/web3youth
